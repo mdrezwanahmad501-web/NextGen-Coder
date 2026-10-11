@@ -1533,3 +1533,12 @@ footer {
     stroke-dashoffset: 0;
   }
 }
+/* Keep Rewish widget above the portfolio content */
+body {
+    isolation: isolate;
+}
+
+iframe[src*="rewi.sh"],
+iframe[src*="rewish"] {
+    z-index: 2147483647 !important;
+}
