@@ -331,3 +331,278 @@ window.addEventListener('load', () => {
     });
   }
 });
+
+/* ==========================================
+   NEW PORTFOLIO ANIMATIONS
+   Social links + Certificate gallery
+========================================== */
+(() => {
+    'use strict';
+
+    const reducedMotion = window.matchMedia(
+        '(prefers-reduced-motion: reduce)'
+    ).matches;
+
+    const initPortfolioAdditions = () => {
+        const animatedItems = [
+            ...document.querySelectorAll('.profile-link-card'),
+            ...document.querySelectorAll('.certificate-card')
+        ];
+
+        if (!animatedItems.length) return;
+
+        // Keep the interface fully visible when motion is disabled.
+        if (reducedMotion) {
+            animatedItems.forEach(item => {
+                item.style.opacity = '1';
+                item.style.transform = 'none';
+            });
+            return;
+        }
+
+        // Use the existing GSAP library when it is available.
+        if (window.gsap && window.ScrollTrigger) {
+            gsap.registerPlugin(ScrollTrigger);
+
+            gsap.set(animatedItems, {
+                opacity: 0,
+                y: 28
+            });
+
+            animatedItems.forEach((item, index) => {
+                gsap.to(item, {
+                    opacity: 1,
+                    y: 0,
+                    duration: 0.7,
+                    delay: (index % 3) * 0.08,
+                    ease: 'power3.out',
+                    scrollTrigger: {
+                        trigger: item,
+                        start: 'top 92%',
+                        once: true
+                    }
+                });
+            });
+
+            return;
+        }
+
+        // Fallback if GSAP is unavailable.
+        if ('IntersectionObserver' in window) {
+            animatedItems.forEach(item => {
+                item.style.opacity = '0';
+                item.style.transform = 'translateY(28px)';
+                item.style.transition =
+                    'opacity 650ms ease, transform 650ms ease';
+            });
+
+            const observer = new IntersectionObserver(entries => {
+                entries.forEach(entry => {
+                    if (!entry.isIntersecting) return;
+
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                    observer.unobserve(entry.target);
+                });
+            }, {
+                threshold: 0.12,
+                rootMargin: '0px 0px -30px 0px'
+            });
+
+            animatedItems.forEach(item => observer.observe(item));
+        } else {
+            animatedItems.forEach(item => {
+                item.style.opacity = '1';
+                item.style.transform = 'none';
+            });
+        }
+    };
+
+    if (document.readyState === 'loading') {
+        document.addEventListener(
+            'DOMContentLoaded',
+            initPortfolioAdditions,
+            { once: true }
+        );
+    } else {
+        initPortfolioAdditions();
+    }
+})();
+
+
+/* =========================================
+   PREMIUM PORTFOLIO MOTION
+   Add after the existing JavaScript
+========================================= */
+
+(() => {
+    'use strict';
+
+    const reduceMotion = window.matchMedia(
+        '(prefers-reduced-motion: reduce)'
+    ).matches;
+
+    // Back to Top button
+    let backToTop = document.querySelector('.back-to-top');
+
+    if (!backToTop) {
+        backToTop = document.createElement('button');
+        backToTop.className = 'back-to-top';
+        backToTop.type = 'button';
+        backToTop.setAttribute('aria-label', 'Back to top');
+        backToTop.title = 'Back to top';
+        backToTop.textContent = '↑';
+        document.body.appendChild(backToTop);
+    }
+
+    const updateBackToTop = () => {
+        backToTop.classList.toggle(
+            'is-visible',
+            window.scrollY > 450
+        );
+    };
+
+    window.addEventListener('scroll', updateBackToTop, {
+        passive: true
+    });
+
+    updateBackToTop();
+
+    backToTop.addEventListener('click', () => {
+        window.scrollTo({
+            top: 0,
+            behavior: reduceMotion ? 'instant' : 'smooth'
+        });
+    });
+
+    // Avoid animation conflicts if GSAP is unavailable.
+    if (reduceMotion || !window.gsap || !window.ScrollTrigger) {
+        return;
+    }
+
+    const gsap = window.gsap;
+    const ScrollTrigger = window.ScrollTrigger;
+
+    gsap.registerPlugin(ScrollTrigger);
+
+    // Animate the existing brand logo on initial page load.
+    const logo = document.querySelector('.logo');
+
+    if (logo && !logo.dataset.premiumAnimated) {
+        logo.dataset.premiumAnimated = 'true';
+
+        gsap.fromTo(
+            logo,
+            {
+                opacity: 0,
+                y: -10
+            },
+            {
+                opacity: 1,
+                y: 0,
+                duration: 0.65,
+                ease: 'power2.out',
+                clearProps: 'opacity,transform'
+            }
+        );
+    }
+
+    // Animate selected headings as they enter the viewport.
+    // Existing content and section layout remain unchanged.
+    const headings = document.querySelectorAll(
+        '.section-header h2, ' +
+        '.connected-skills-header h2, ' +
+        '.reviews-header h2, ' +
+        '.contact-left h2'
+    );
+
+    headings.forEach((heading) => {
+        if (heading.dataset.premiumAnimated) return;
+
+        heading.dataset.premiumAnimated = 'true';
+
+        gsap.fromTo(
+            heading,
+            {
+                opacity: 0,
+                y: 22
+            },
+            {
+                opacity: 1,
+                y: 0,
+                duration: 0.65,
+                ease: 'power2.out',
+                clearProps: 'opacity,transform',
+                scrollTrigger: {
+                    trigger: heading,
+                    start: 'top 88%',
+                    once: true
+                }
+            }
+        );
+    });
+
+    // Refresh measurements after images and layout have loaded.
+    window.addEventListener('load', () => {
+        ScrollTrigger.refresh();
+    }, { once: true });
+
+})();
+
+/* ======================================
+   PROFESSIONAL LIGHT / DARK MODE
+====================================== */
+
+(() => {
+    'use strict';
+
+    const lightButton = document.getElementById('light-mode');
+    const darkButton = document.getElementById('dark-mode');
+
+    if (!lightButton || !darkButton) return;
+
+    const buttons = [lightButton, darkButton];
+
+    function setTheme(theme) {
+        const isLight = theme === 'light';
+
+        document.body.classList.toggle('light-theme', isLight);
+
+        lightButton.classList.toggle('active', isLight);
+        darkButton.classList.toggle('active', !isLight);
+
+        lightButton.setAttribute(
+            'aria-pressed', String(isLight)
+        );
+
+        darkButton.setAttribute(
+            'aria-pressed', String(!isLight)
+        );
+
+        document.documentElement.style.colorScheme = theme;
+
+        try {
+            localStorage.setItem('nextgen-theme', theme);
+        } catch (error) {
+            // Theme still works if browser storage is unavailable.
+        }
+    }
+
+    lightButton.addEventListener('click', () => {
+        setTheme('light');
+    });
+
+    darkButton.addEventListener('click', () => {
+        setTheme('dark');
+    });
+
+    let savedTheme = 'dark';
+
+    try {
+        savedTheme = localStorage.getItem('nextgen-theme') || 'dark';
+    } catch (error) {
+        // Use dark mode by default.
+    }
+
+    setTheme(savedTheme);
+})();
